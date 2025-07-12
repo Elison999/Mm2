@@ -216,6 +216,12 @@ task.spawn(function()
 end)
 
 local Tab = Window:CreateTab("Sheriff", 4483362458) -- Title, Image
+ 
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local LocalPlayer = Players.LocalPlayer
 
 -- Criação do Toggle
 local Toggle = Tab:CreateToggle({
@@ -245,11 +251,9 @@ ShootButton.TextSize = 14
 ShootButton.Text = "SHOOT"
 ShootButton.Parent = ScreenGui
 
--- Variáveis de drag
+-- Drag do botão
 local dragging = false
-local dragInput
-local dragStart
-local startPos
+local dragInput, dragStart, startPos
 
 local function update(input)
     local delta = input.Position - dragStart
@@ -282,7 +286,22 @@ UserInputService.InputChanged:Connect(function(input)
     end
 end)
 
--- Função para atirar (pode ser chamada manual ou automaticamente)
+-- Função para obter ping em segundos
+local function getPingTime()
+    local stats = LocalPlayer:FindFirstChild("PlayerGui"):FindFirstChild("PerformanceStats")
+    if stats then
+        local pingLabel = stats:FindFirstChild("Ping")
+        if pingLabel then
+            local pingString = pingLabel.Text:match("%d+")
+            if pingString then
+                return tonumber(pingString) / 1000
+            end
+        end
+    end
+    return 0.125 -- fallback ping médio: 125ms
+end
+
+-- Função para atirar
 local function shoot()
     TweenService:Create(ShootButton, TweenInfo.new(0.1), {Size = UDim2.new(0.50, 0, 0, 80), TextSize = 13}):Play()
     task.wait(0.1)
@@ -312,14 +331,13 @@ local function shoot()
             local targetPos = targetChar.HumanoidRootPart.Position
             local targetVel = targetChar.HumanoidRootPart.Velocity
 
-            local bulletSpeed = 300
-            local distance = (targetPos - char.HumanoidRootPart.Position).Magnitude
-            local leadPos = targetPos + (targetVel * (distance / bulletSpeed))
+            local ping = getPingTime()
+            local predictedPos = targetPos + (targetVel * ping)
 
             local success, err = pcall(function()
                 local gunRemote = workspace:WaitForChild(LocalPlayer.Name):WaitForChild("Gun")
                     :WaitForChild("KnifeLocal"):WaitForChild("CreateBeam"):WaitForChild("RemoteFunction")
-                gunRemote:InvokeServer(1, leadPos, "AH2")
+                gunRemote:InvokeServer(1, predictedPos, "AH2")
 
                 ShootButton.Text = "SHOT FIRED"
                 ShootButton.BackgroundColor3 = Color3.fromRGB(40, 180, 40)
@@ -360,11 +378,9 @@ task.spawn(function()
         if autoShootEnabled then
             shoot()
         end
-        task.wait() -- intervalo entre os disparos automáticos
+        task.wait(0) -- intervalo ajustável entre os disparos
     end
 end)
-   end,
-})
 
 local Tab = Window:CreateTab("Auto", 4483362458) -- Title, Image
 
@@ -426,7 +442,7 @@ local function teleportToGunAndBack()
 
     local timeout = tick() + 2
     while gun:IsDescendantOf(Workspace) and tick() < timeout do
-        task.wait(1)
+        task.wait(0)
     end
 
     root.CFrame = originalCFrame
