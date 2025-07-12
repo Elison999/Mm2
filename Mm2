@@ -363,6 +363,8 @@ task.spawn(function()
         task.wait() -- intervalo entre os disparos automáticos
     end
 end)
+   end,
+})
 
 local Tab = Window:CreateTab("Auto", 4483362458) -- Title, Image
 
