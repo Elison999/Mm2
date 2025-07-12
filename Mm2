@@ -217,15 +217,6 @@ end)
 
 local Tab = Window:CreateTab("Sheriff", 4483362458) -- Title, Image
 
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
-local Workspace = game:GetService("Workspace")
-
--- Variável de controle
-local autoShootEnabled = false
-
 -- Criação do Toggle
 local Toggle = Tab:CreateToggle({
     Name = "Auto Shoot",
