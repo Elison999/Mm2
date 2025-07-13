@@ -124,7 +124,7 @@ end
 
 -- MOVEMENT TAB
 local TabMovement = Window:CreateTab("Movement", 4483362458)
-local GlitchSpeed = 27
+local GlitchSpeed = 33
 local NormalSpeed = 16
 local ToggleEnabled = false
 local IsJumping = false
