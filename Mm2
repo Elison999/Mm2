@@ -1,117 +1,60 @@
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-   Name = "MM2 the script is still under testing",
-   Icon = 0, -- Icon in Topbar. Can use Lucide Icons (string) or Roblox Image (number). 0 to use no icon (default).
-   LoadingTitle = "Loading...",
-   LoadingSubtitle = "by darker9899",
-   ShowText = "Rayfield", -- for mobile users to unhide rayfield, change if you'd like
-   Theme = "Default", -- Check https://docs.sirius.menu/rayfield/configuration/themes
+	Name = "MM2 the script is still under testing",
+	Icon = 0,
+	LoadingTitle = "Loading...",
+	LoadingSubtitle = "by darker9899",
+	ShowText = "Rayfield",
+	Theme = "Default",
+	ToggleUIKeybind = "K",
+	DisableRayfieldPrompts = false,
+	DisableBuildWarnings = false,
 
-   ToggleUIKeybind = "K", -- The keybind to toggle the UI visibility (string like "K" or Enum.KeyCode)
+	ConfigurationSaving = {
+		Enabled = true,
+		FolderName = nil,
+		FileName = "Big Hub"
+	},
 
-   DisableRayfieldPrompts = false,
-   DisableBuildWarnings = false, -- Prevents Rayfield from warning when the script has a version mismatch with the interface
+	Discord = {
+		Enabled = false,
+		Invite = "noinvitelink",
+		RememberJoins = true
+	},
 
-   ConfigurationSaving = {
-      Enabled = true,
-      FolderName = nil, -- Create a custom folder for your hub/game
-      FileName = "Big Hub"
-   },
-
-   Discord = {
-      Enabled = false, -- Prompt the user to join your Discord server if their executor supports it
-      Invite = "noinvitelink", -- The Discord invite code, do not include discord.gg/. E.g. discord.gg/ ABCD would be ABCD
-      RememberJoins = true -- Set this to false to make them join the discord every time they load it up
-   },
-
-   KeySystem = false, -- Set this to true to use our key system
-   KeySettings = {
-      Title = "Untitled",
-      Subtitle = "Key System",
-      Note = "No method of obtaining the key is provided", -- Use this to tell the user how to get a key
-      FileName = "Key", -- It is recommended to use something unique as other scripts using Rayfield may overwrite your key file
-      SaveKey = true, -- The user's key will be saved, but if you change the key, they will be unable to use your script
-      GrabKeyFromSite = false, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
-      Key = {"JKB"} -- List of keys that will be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("hello","key22")
-   }
-})
-
-local Tab = Window:CreateTab("innocents", 4483362458) -- Title, Image
-
---// Serviços
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local Workspace = game:GetService("Workspace")
-
-local LocalPlayer = Players.LocalPlayer
-local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-local RootPart = Character:WaitForChild("HumanoidRootPart")
-
---// Configurações
-local detectionRange = 50      -- Distância para detectar a faca
-local dodgeDistance = 10       -- Quanto se mover para o lado
-
--- Variável de controle
-local dodgeEnabled = false
-
---// Função para detectar e desviar de facas
-local function dodgeKnife()
-    if not dodgeEnabled then return end
-
-    for _, obj in pairs(Workspace:GetChildren()) do
-        if obj:IsA("BasePart") and obj.Name == "KnifeProjectile" then
-            local knifePos = obj.Position
-            local playerPos = RootPart.Position
-            local distance = (knifePos - playerPos).Magnitude
-
-            if distance <= detectionRange then
-                local dodgeDir = math.random(0, 1) == 0 and -1 or 1
-                local rightVector = RootPart.CFrame.RightVector * dodgeDir * dodgeDistance
-                RootPart.CFrame = RootPart.CFrame + rightVector
-            end
-        end
-    end
-end
-
--- Loop contínuo
-RunService.Heartbeat:Connect(function()
-    pcall(dodgeKnife)
-end)
-
---// Toggle da UI (usando biblioteca com suporte a CreateToggle)
-local Toggle = Tab:CreateToggle({
-    Name = "Auto Desviar Faca",
-    CurrentValue = false,
-    Flag = "AutoDodgeKnife",
-    Callback = function(Value)
-        dodgeEnabled = Value
-    end,
-})
-
-local Tab = Window:CreateTab("Esp", 4483362458) -- Title, Image
-
--- Toggle do seu Hub
-local ESP_Ativo = false
-
-local Toggle = Tab:CreateToggle({
-   Name = "Outline ESP MM2",
-   CurrentValue = false,
-   Flag = "ToggleESP",
-   Callback = function(Value)
-       ESP_Ativo = Value
-       if not ESP_Ativo then
-           RemoverTodosHighlights()
-       end
-   end,
+	KeySystem = false,
+	KeySettings = {
+		Title = "Untitled",
+		Subtitle = "Key System",
+		Note = "No method of obtaining the key is provided",
+		FileName = "Key",
+		SaveKey = true,
+		GrabKeyFromSite = false,
+		Key = {"JKB"}
+	}
 })
 
 -- Serviços
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 
--- Função para criar ou atualizar Highlight
+-- ESP TAB
+local TabESP = Window:CreateTab("Esp", 4483362458)
+local ESP_Ativo = false
+
+local function RemoverTodosHighlights()
+	for _, player in pairs(Players:GetPlayers()) do
+		if player.Character and player.Character:FindFirstChild("OutlineESP") then
+			player.Character.OutlineESP:Destroy()
+		end
+	end
+end
+
 local function UpdateHighlight(player)
 	if player.Character then
 		local highlight = player.Character:FindFirstChild("OutlineESP")
@@ -124,17 +67,15 @@ local function UpdateHighlight(player)
 			highlight.Parent = player.Character
 		end
 
-		-- Atualiza cor baseado no item do jogador
 		local tool = player.Character:FindFirstChildOfClass("Tool") or (player:FindFirstChild("Backpack") and player.Backpack:FindFirstChildOfClass("Tool"))
-
 		if tool then
 			local name = tool.Name:lower()
 			if name:find("gun") then
-				highlight.OutlineColor = Color3.fromRGB(0, 170, 255) -- Sheriff
+				highlight.OutlineColor = Color3.fromRGB(0, 170, 255)
 			elseif name:find("knife") then
-				highlight.OutlineColor = Color3.fromRGB(255, 0, 0) -- Murder
+				highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
 			else
-				highlight.OutlineColor = Color3.fromRGB(0, 255, 0) -- Inocente
+				highlight.OutlineColor = Color3.fromRGB(0, 255, 0)
 			end
 		else
 			highlight.OutlineColor = Color3.fromRGB(0, 255, 0)
@@ -142,16 +83,16 @@ local function UpdateHighlight(player)
 	end
 end
 
--- Remover todos os Highlights
-function RemoverTodosHighlights()
-	for _, player in pairs(Players:GetPlayers()) do
-		if player.Character and player.Character:FindFirstChild("OutlineESP") then
-			player.Character:FindFirstChild("OutlineESP"):Destroy()
-		end
-	end
-end
+TabESP:CreateToggle({
+	Name = "Outline ESP MM2",
+	CurrentValue = false,
+	Flag = "ToggleESP",
+	Callback = function(Value)
+		ESP_Ativo = Value
+		if not ESP_Ativo then RemoverTodosHighlights() end
+	end,
+})
 
--- Atualização contínua a cada 0.1s
 task.spawn(function()
 	while true do
 		if ESP_Ativo then
@@ -165,317 +106,286 @@ task.spawn(function()
 	end
 end)
 
--- Atualiza quando personagem nasce
 Players.PlayerAdded:Connect(function(player)
 	player.CharacterAdded:Connect(function()
-		wait(1)
-		if ESP_Ativo then
-			UpdateHighlight(player)
-		end
+		task.wait(1)
+		if ESP_Ativo then UpdateHighlight(player) end
 	end)
 end)
 
 for _, player in pairs(Players:GetPlayers()) do
 	if player ~= LocalPlayer then
 		player.CharacterAdded:Connect(function()
-			wait(1)
-			if ESP_Ativo then
-				UpdateHighlight(player)
-			end
+			task.wait(1)
+			if ESP_Ativo then UpdateHighlight(player) end
 		end)
 	end
 end
 
-local velocidadeAtual = 10 -- Valor inicial igual ao CurrentValue
+-- MOVEMENT TAB
+local TabMovement = Window:CreateTab("Movement", 4483362458)
+local GlitchSpeed = 27
+local NormalSpeed = 16
+local ToggleEnabled = false
+local IsJumping = false
 
-local Slider = Tab:CreateSlider({
-   Name = "Speed",
-   Range = {0, 100}, -- Pode ajustar o máximo/min se quiser
-   Increment = 1,
-   Suffix = " ms", -- milissegundos, por exemplo
-   CurrentValue = 10,
-   Flag = "VelocidadeSlider",
-   Callback = function(Value)
-       velocidadeAtual = Value
-       print("Velocidade atualizada para:", velocidadeAtual)
-   end,
-})
-
--- Exemplo de uso da variável de velocidade em loop
-local RunService = game:GetService("RunService")
-local rodando = true
-
-task.spawn(function()
-    while rodando do
-        -- Aqui é onde você colocaria sua ação
-        print("Executando ação com velocidade:", velocidadeAtual)
-
-        -- Converte ms para segundos se necessário
-        task.wait(velocidadeAtual / 1000)
-    end
-end)
-
-local Tab = Window:CreateTab("Sheriff", 4483362458) -- Title, Image
- 
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
-local LocalPlayer = Players.LocalPlayer
-
--- Criação do Toggle
-local Toggle = Tab:CreateToggle({
-    Name = "Auto Shoot",
-    CurrentValue = true,
-    Flag = "AutoShootToggle",
-    Callback = function(Value)
-        autoShootEnabled = Value
-    end,
-})
-
--- Criar ScreenGui
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "ShootGui"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
-
--- Criar o botão Shoot
-local ShootButton = Instance.new("TextButton")
-ShootButton.Name = "ShootButton"
-ShootButton.Size = UDim2.new(0, 100, 0, 100)
-ShootButton.Position = UDim2.new(0.5, -60, 0.8, 0)
-ShootButton.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
-ShootButton.TextColor3 = Color3.new(1, 1, 1)
-ShootButton.Font = Enum.Font.SourceSansBold
-ShootButton.TextSize = 14
-ShootButton.Text = "SHOOT"
-ShootButton.Parent = ScreenGui
-
--- Drag do botão
-local dragging = false
-local dragInput, dragStart, startPos
-
-local function update(input)
-    local delta = input.Position - dragStart
-    ShootButton.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+local function SetSpeed(speed)
+	local char = LocalPlayer.Character
+	if char and char:FindFirstChildOfClass("Humanoid") then
+		char:FindFirstChildOfClass("Humanoid").WalkSpeed = speed
+	end
 end
 
-ShootButton.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = ShootButton.Position
+local function SetupHumanoid(humanoid)
+	if not humanoid then return end
+	humanoid.StateChanged:Connect(function(_, newState)
+		if not ToggleEnabled then return end
+		if newState == Enum.HumanoidStateType.Jumping or newState == Enum.HumanoidStateType.Freefall then
+			IsJumping = true
+		elseif newState == Enum.HumanoidStateType.Landed or newState == Enum.HumanoidStateType.Running then
+			IsJumping = false
+			SetSpeed(NormalSpeed)
+		end
+	end)
+end
 
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
-    end
+LocalPlayer.CharacterAdded:Connect(function(char)
+	local humanoid = char:WaitForChild("Humanoid", 5)
+	SetupHumanoid(humanoid)
+	SetSpeed(NormalSpeed)
 end)
 
-ShootButton.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        dragInput = input
-    end
+if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+	SetupHumanoid(LocalPlayer.Character:FindFirstChild("Humanoid"))
+	SetSpeed(NormalSpeed)
+end
+
+RunService.Heartbeat:Connect(function()
+	if not ToggleEnabled then return end
+	local char = LocalPlayer.Character
+	if char and char:FindFirstChildOfClass("Humanoid") and IsJumping then
+		local moving = char.Humanoid.MoveDirection.Magnitude > 0
+		if moving then
+			SetSpeed(GlitchSpeed)
+		end
+	end
+end)
+
+TabMovement:CreateToggle({
+	Name = "Glitch Speed (Mobile)",
+	CurrentValue = false,
+	Flag = "GlitchSpeedToggle",
+	Callback = function(Value)
+		ToggleEnabled = Value
+		SetSpeed(NormalSpeed)
+	end,
+})
+
+-- SHERIFF TAB
+local TabSheriff = Window:CreateTab("Sheriff", 4483362458)
+local autoShootEnabled = true
+
+TabSheriff:CreateToggle({
+	Name = "Auto Shoot",
+	CurrentValue = true,
+	Flag = "AutoShootToggle",
+	Callback = function(Value)
+		autoShootEnabled = Value
+	end,
+})
+
+-- Shoot Button GUI
+local gui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
+gui.Name = "ShootGui"
+gui.ResetOnSpawn = false
+
+local button = Instance.new("TextButton", gui)
+button.Size = UDim2.new(0, 100, 0, 100)
+button.Position = UDim2.new(0.5, -60, 0.8, 0)
+button.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+button.TextColor3 = Color3.new(1, 1, 1)
+button.Font = Enum.Font.SourceSansBold
+button.TextSize = 14
+button.Text = "SHOOT"
+
+-- Drag
+local dragging, dragStart, startPos, dragInput
+button.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		dragging = true
+		dragStart = input.Position
+		startPos = button.Position
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
+	end
+end)
+
+button.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+		dragInput = input
+	end
 end)
 
 UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        update(input)
-    end
+	if input == dragInput and dragging then
+		local delta = input.Position - dragStart
+		button.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+	end
 end)
 
--- Função para obter ping em segundos
-local function getPingTime()
-    local stats = LocalPlayer:FindFirstChild("PlayerGui"):FindFirstChild("PerformanceStats")
-    if stats then
-        local pingLabel = stats:FindFirstChild("Ping")
-        if pingLabel then
-            local pingString = pingLabel.Text:match("%d+")
-            if pingString then
-                return tonumber(pingString) / 1000
-            end
-        end
-    end
-    return 0.125 -- fallback ping médio: 125ms
-end
+local function getPingTime() return 0.125 end
 
--- Função para atirar
 local function shoot()
-    TweenService:Create(ShootButton, TweenInfo.new(0.1), {Size = UDim2.new(0.50, 0, 0, 80), TextSize = 13}):Play()
-    task.wait(0.1)
-    TweenService:Create(ShootButton, TweenInfo.new(0.1), {Size = UDim2.new(0.50, 0, 0, 82), TextSize = 14}):Play()
+	TweenService:Create(button, TweenInfo.new(0.1), {Size = UDim2.new(0, 100, 0, 90)}):Play()
+	task.wait(0.1)
+	TweenService:Create(button, TweenInfo.new(0.1), {Size = UDim2.new(0, 100, 0, 100)}):Play()
 
-    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-    local backpack = LocalPlayer:WaitForChild("Backpack")
-    local gun = backpack:FindFirstChild("Gun") or char:FindFirstChild("Gun")
+	local char = LocalPlayer.Character
+	local backpack = LocalPlayer:FindFirstChild("Backpack")
+	local gun = backpack and backpack:FindFirstChild("Gun") or char and char:FindFirstChild("Gun")
 
-    if gun then
-        char:WaitForChild("Humanoid"):EquipTool(gun)
-        task.wait(0.2)
+	if gun then
+		char:FindFirstChild("Humanoid"):EquipTool(gun)
+		task.wait(0.1)
 
-        local murderer = nil
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Character then
-                local knife = player.Character:FindFirstChild("Knife") or player.Backpack:FindFirstChild("Knife")
-                if knife then
-                    murderer = player
-                    break
-                end
-            end
-        end
+		for _, player in pairs(Players:GetPlayers()) do
+			if player ~= LocalPlayer and player.Character and (player.Character:FindFirstChild("Knife") or player.Backpack:FindFirstChild("Knife")) then
+				local pos = player.Character.HumanoidRootPart.Position
+				local vel = player.Character.HumanoidRootPart.Velocity
+				local predicted = pos + vel * getPingTime()
 
-        if murderer and murderer.Character and murderer.Character:FindFirstChild("HumanoidRootPart") then
-            local targetChar = murderer.Character
-            local targetPos = targetChar.HumanoidRootPart.Position
-            local targetVel = targetChar.HumanoidRootPart.Velocity
-
-            local ping = getPingTime()
-            local predictedPos = targetPos + (targetVel * ping)
-
-            local success, err = pcall(function()
-                local gunRemote = workspace:WaitForChild(LocalPlayer.Name):WaitForChild("Gun")
-                    :WaitForChild("KnifeLocal"):WaitForChild("CreateBeam"):WaitForChild("RemoteFunction")
-                gunRemote:InvokeServer(1, predictedPos, "AH2")
-
-                ShootButton.Text = "SHOT FIRED"
-                ShootButton.BackgroundColor3 = Color3.fromRGB(40, 180, 40)
-                task.wait(1)
-                ShootButton.Text = "SHOOT"
-                ShootButton.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
-            end)
-
-            if not success then
-                ShootButton.Text = "FAILED"
-                ShootButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-                task.wait(1)
-                ShootButton.Text = "SHOOT"
-                ShootButton.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
-            end
-        else
-            ShootButton.Text = "NO TARGET"
-            ShootButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-            task.wait(1)
-            ShootButton.Text = "SHOOT"
-            ShootButton.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
-        end
-    else
-        ShootButton.Text = "NO GUN"
-        ShootButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-        task.wait(1)
-        ShootButton.Text = "SHOOT"
-        ShootButton.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
-    end
+				pcall(function()
+					local gunRemote = workspace:WaitForChild(LocalPlayer.Name):WaitForChild("Gun")
+						:WaitForChild("KnifeLocal"):WaitForChild("CreateBeam"):WaitForChild("RemoteFunction")
+					gunRemote:InvokeServer(1, predicted, "AH2")
+				end)
+				break
+			end
+		end
+	end
 end
 
--- Clique manual
-ShootButton.MouseButton1Click:Connect(shoot)
+button.MouseButton1Click:Connect(shoot)
 
--- Loop do auto shoot
 task.spawn(function()
-    while true do
-        if autoShootEnabled then
-            shoot()
-        end
-        task.wait(0) -- intervalo ajustável entre os disparos
-    end
+	while true do
+		if autoShootEnabled then
+			pcall(shoot)
+			task.wait(0.5)
+		else
+			task.wait(1)
+		end
+	end
 end)
 
-local Tab = Window:CreateTab("Auto", 4483362458) -- Title, Image
+-- AUTO TAB
+local TabAuto = Window:CreateTab("Auto", 4483362458)
+local Farmando = false
+local HRP = LocalPlayer.Character:WaitForChild("HumanoidRootPart")
 
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
-local Workspace = game:GetService("Workspace")
+local function AutoFarmCoins()
+	while Farmando do
+		for _, coinServer in pairs(workspace:WaitForChild("Hotel"):WaitForChild("CoinContainer"):GetChildren()) do
+			local coinVisual = coinServer:FindFirstChild("CoinVisual")
+			if coinVisual and coinVisual:FindFirstChild("MainCoin") then
+				HRP.CFrame = coinVisual.MainCoin.CFrame + Vector3.new(0, 3, 0)
+				task.wait(0.75) -- velocidade ajustada
+			end
+		end
+		task.wait(1)
+	end
+end
 
--- Sistema Auto Get Gun
-local AutoGetGun = {
-    Enabled = false,
-    CollectDistance = 5000
-}
+TabAuto:CreateToggle({
+	Name = "Auto Farm Coins",
+	CurrentValue = false,
+	Flag = "AutoFarmCoins",
+	Callback = function(Value)
+		Farmando = Value
+		if Value then task.spawn(AutoFarmCoins) end
+	end,
+})
+
+TabAuto:CreateToggle({
+	Name = "Detectar GunDrop",
+	CurrentValue = false,
+	Flag = "GunDrop Notification",
+	Callback = function(Value)
+		if Value then
+			task.spawn(function()
+				while Value do
+					if Workspace:FindFirstChild("GunDrop") then
+						Rayfield:Notify({Title = "Arma Dropada!", Content = "A arma está no mapa!", Duration = 5})
+						repeat task.wait(3) until not Workspace:FindFirstChild("GunDrop")
+					end
+					task.wait(3)
+				end
+			end)
+		end
+	end,
+})
+
+local AutoGetGun = { Enabled = false, CollectDistance = 5000 }
 
 local function isMurderer()
-    local char = LocalPlayer.Character
-    if not char then return false end
-    for _, tool in ipairs(char:GetChildren()) do
-        if tool:IsA("Tool") and tool.Name == "Knife" then
-            return true
-        end
-    end
-    return false
+	for _, t in pairs(LocalPlayer.Character:GetChildren()) do
+		if t:IsA("Tool") and t.Name == "Knife" then return true end
+	end
+	return false
 end
 
 local function getNearestGun()
-    local char = LocalPlayer.Character
-    if not char then return nil end
-    local root = char:FindFirstChild("HumanoidRootPart")
-    if not root then return nil end
+	local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+	if not root then return end
 
-    local closestGun, closestDist = nil, AutoGetGun.CollectDistance
-    for _, item in ipairs(Workspace:GetDescendants()) do
-        if item.Name == "GunDrop" then
-            local success, pos = pcall(function() return item:GetPivot().Position end)
-            if success then
-                local dist = (root.Position - pos).Magnitude
-                if dist < closestDist then
-                    closestGun, closestDist = item, dist
-                end
-            end
-        end
-    end
-    return closestGun
-end
-
-local function teleportToGunAndBack()
-    if isMurderer() then return end
-    local char = LocalPlayer.Character
-    if not char then return end
-    local root = char:FindFirstChild("HumanoidRootPart")
-    if not root then return end
-    local gun = getNearestGun()
-    if not gun then return end
-
-    local originalCFrame = root.CFrame
-    root.CFrame = CFrame.new(gun:GetPivot().Position + Vector3.new(0, 2, 0))
-
-    local timeout = tick() + 2
-    while gun:IsDescendantOf(Workspace) and tick() < timeout do
-        task.wait(0)
-    end
-
-    root.CFrame = originalCFrame
+	local closest, dist = nil, AutoGetGun.CollectDistance
+	for _, item in ipairs(Workspace:GetDescendants()) do
+		if item.Name == "GunDrop" then
+			local success, pos = pcall(function() return item:GetPivot().Position end)
+			if success and (root.Position - pos).Magnitude < dist then
+				closest = item
+				dist = (root.Position - pos).Magnitude
+			end
+		end
+	end
+	return closest
 end
 
 local function autoGetGunLoop()
-    while AutoGetGun.Enabled do
-        teleportToGunAndBack()
-        task.wait(3)
-    end
+	while AutoGetGun.Enabled do
+		if not isMurderer() then
+			local gun = getNearestGun()
+			local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+			if gun and gun:IsA("BasePart") and root then
+				local original = root.CFrame
+				root.CFrame = CFrame.new(gun.Position + Vector3.new(0, 2, 0))
+				task.wait()
+				root.CFrame = original
+			end
+		end
+		task.wait(3)
+	end
 end
 
--- Toggle no estilo Tab:CreateToggle
-local Toggle = Tab:CreateToggle({
-    Name = "Auto Get Gun",
-    CurrentValue = false,
-    Flag = "AutoGetGunToggle",
-    Callback = function(Value)
-        AutoGetGun.Enabled = Value
-        if Value then
-            task.spawn(autoGetGunLoop)
-        end
-    end,
+TabAuto:CreateToggle({
+	Name = "Auto Get Gun",
+	CurrentValue = false,
+	Flag = "AutoGetGunToggle",
+	Callback = function(Value)
+		AutoGetGun.Enabled = Value
+		if Value then task.spawn(autoGetGunLoop) end
+	end,
 })
 
-local Tab = Window:CreateTab("More", 4483362458) -- Title, Image
-
-local Button = Tab:CreateButton({
-   Name = "invisible script",
-   Callback = function()
-    --[[
-	WARNING: Heads up! This script has not been verified by ScriptBlox. Use at your own risk!
-]]
-loadstring(game:HttpGet('https://pastebin.com/raw/3Rnd9rHf'))()
-   end,
+-- MORE TAB
+local TabMore = Window:CreateTab("More", 4483362458)
+TabMore:CreateButton({
+	Name = "invisible script",
+	Callback = function()
+		loadstring(game:HttpGet("https://pastebin.com/raw/3Rnd9rHf"))()
+	end,
 })
+TabMore:CreateParagraph({Title = "nao clique duas vezes se nao o script vai bugar", Content = ""})
