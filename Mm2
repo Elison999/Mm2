@@ -306,50 +306,6 @@ end)
 
 -- AUTO TAB
 local TabAuto = Window:CreateTab("Auto", 4483362458)
-local Farmando = false
-local HRP = LocalPlayer.Character:WaitForChild("HumanoidRootPart")
-
-local function AutoFarmCoins()
-	while Farmando do
-		for _, coinServer in pairs(workspace:WaitForChild("Hotel"):WaitForChild("CoinContainer"):GetChildren()) do
-			local coinVisual = coinServer:FindFirstChild("CoinVisual")
-			if coinVisual and coinVisual:FindFirstChild("MainCoin") then
-				HRP.CFrame = coinVisual.MainCoin.CFrame + Vector3.new(0, 3, 0)
-				task.wait(0.75)
-			end
-		end
-		task.wait(1)
-	end
-end
-
-TabAuto:CreateToggle({
-	Name = "Auto Farm Coins",
-	CurrentValue = false,
-	Flag = "AutoFarmCoins",
-	Callback = function(Value)
-		Farmando = Value
-		if Value then task.spawn(AutoFarmCoins) end
-	end,
-})
-
-TabAuto:CreateToggle({
-	Name = "Detectar GunDrop",
-	CurrentValue = false,
-	Flag = "GunDrop Notification",
-	Callback = function(Value)
-		if Value then
-			task.spawn(function()
-				while Value do
-					if Workspace:FindFirstChild("GunDrop") then
-						Rayfield:Notify({Title = "Arma Dropada!", Content = "A arma está no mapa!", Duration = 5})
-						repeat task.wait(3) until not Workspace:FindFirstChild("GunDrop")
-					end
-					task.wait(3)
-				end
-			end)
-		end
-	end,
-})
 
 local AutoGetGun = { Enabled = false, CollectDistance = 5000 }
 
