@@ -308,12 +308,12 @@ end)
 local TabAuto = Window:CreateTab("Auto", 4483362458)
 
 local autofarmEnabled = false
-local walkSpeed = 30
-local safeY = 5
+local walkSpeed = 200
+local safeY = 10
 local coinCount = 0
 
 local maps = {
-	"ResearchFacility", "Factory", "Millbase", "Workplace", "Hotel", "Hotel2", "House2", "Mansion2", "Office3", "Bank2", "BioLab"
+	"ResearchFacility", "Factory", "Milbase", "Workplace", "Hotel", "Hotel2", "House2", "Mansion2", "Office3", "Bank2", "BioLab"
 }
 
 TabAuto:CreateToggle({
@@ -426,7 +426,7 @@ task.spawn(function()
 				end
 
 				if #coins == 0 then
-					task.wait(1)
+					task.wait(0)
 				end
 			end
 		end
