@@ -310,6 +310,7 @@ local TabAuto = Window:CreateTab("Auto", 4483362458)
 local autofarmEnabled = false
 local walkSpeed = 30
 local safeY = 5
+local coinCount = 0
 
 local maps = {
 	"ResearchFacility", "Factory", "Millbase", "Workplace", "Hotel", "Hotel 2", "House 2", "Mansion 2", "Office 3", "Bank 2", "Bio Lab"
@@ -324,7 +325,7 @@ TabAuto:CreateToggle({
 	end,
 })
 
--- Funções de suporte
+-- Funções auxiliares
 local function getCurrentMap()
 	for _, name in ipairs(maps) do
 		local map = Workspace:FindFirstChild(name)
@@ -337,10 +338,10 @@ end
 
 local function getAllCoins(map)
 	local coins = {}
-	local coinContainer = map:FindFirstChild("CoinContainer")
-	if coinContainer then
-		for _, obj in pairs(coinContainer:GetDescendants()) do
-			if obj.Name == "MainCoin" and obj:IsA("BasePart") then
+	local container = map:FindFirstChild("CoinContainer")
+	if container then
+		for _, obj in pairs(container:GetDescendants()) do
+			if obj:IsA("BasePart") and obj.Name == "MainCoin" then
 				table.insert(coins, obj)
 			end
 		end
@@ -349,20 +350,20 @@ local function getAllCoins(map)
 end
 
 local function walkTo(position)
-	if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
-	local hrp = LocalPlayer.Character.HumanoidRootPart
-	local direction = (position - hrp.Position).Unit
-	local distance = (hrp.Position - position).Magnitude
-	local duration = distance / walkSpeed
-	local start = tick()
+	local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+	if not hrp then return end
 
-	while tick() - start < duration and autofarmEnabled do
-		if not LocalPlayer.Character or not hrp then break end
-		hrp.Velocity = direction * walkSpeed
-		task.wait()
+	local distance = (position - hrp.Position).Magnitude
+	local direction = (position - hrp.Position).Unit
+	local endTime = tick() + (distance / walkSpeed)
+
+	while tick() < endTime and autofarmEnabled do
+		if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then break end
+		LocalPlayer.Character.HumanoidRootPart.Velocity = direction * walkSpeed
+		RunService.RenderStepped:Wait()
 	end
 
-	hrp.Velocity = Vector3.zero
+	LocalPlayer.Character.HumanoidRootPart.Velocity = Vector3.zero
 end
 
 local function teleportToSafeSpot(map)
@@ -376,21 +377,27 @@ local function teleportToSafeSpot(map)
 	end
 end
 
--- ☁️ NoClip constante
+-- Noclip constante
 RunService.Stepped:Connect(function()
-	if LocalPlayer.Character and autofarmEnabled then
-		for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
-			if v:IsA("BasePart") then
-				v.CanCollide = false
+	if autofarmEnabled and LocalPlayer.Character then
+		for _, part in pairs(LocalPlayer.Character:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.CanCollide = false
 			end
 		end
 	end
 end)
 
--- ♻️ Loop Auto Farm
+-- Loop principal
 task.spawn(function()
 	while true do
 		if autofarmEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+			local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+			if humanoid and humanoid.Health <= 0 then
+				repeat task.wait(1) until LocalPlayer.Character:FindFirstChildOfClass("Humanoid") and LocalPlayer.Character:FindFirstChildOfClass("Humanoid").Health > 0
+				task.wait(2)
+			end
+
 			local map = getCurrentMap()
 			if map then
 				local hrp = LocalPlayer.Character.HumanoidRootPart
@@ -401,17 +408,26 @@ task.spawn(function()
 				end
 
 				local coins = getAllCoins(map)
+				table.sort(coins, function(a, b)
+					return (a.Position - hrp.Position).Magnitude < (b.Position - hrp.Position).Magnitude
+				end)
+
 				for _, coin in ipairs(coins) do
-					if autofarmEnabled and coin and coin.Parent then
+					if autofarmEnabled and coin and coin:IsDescendantOf(game) then
 						pcall(function()
-							walkTo(coin.Position + Vector3.new(0, 3, 0))
-							task.wait(0.1)
+							walkTo(coin.Position + Vector3.new(0, 2.5, 0))
+							task.wait(0.15)
+							coinCount += 1
 						end)
 					end
 				end
+
+				if #coins == 0 then
+					task.wait(1)
+				end
 			end
 		end
-		task.wait(0.5)
+		task.wait(0.3)
 	end
 end)
 
