@@ -313,7 +313,7 @@ local safeY = 5
 local coinCount = 0
 
 local maps = {
-	"ResearchFacility", "Factory", "Millbase", "Workplace", "Hotel", "Hotel 2", "House 2", "Mansion 2", "Office 3", "Bank 2", "Bio Lab"
+	"ResearchFacility", "Factory", "Millbase", "Workplace", "Hotel", "Hotel2", "House2", "Mansion2", "Office3", "Bank2", "BioLab"
 }
 
 TabAuto:CreateToggle({
