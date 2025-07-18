@@ -308,8 +308,8 @@ end)
 local TabAuto = Window:CreateTab("Auto", 4483362458)
 
 local autofarmEnabled = false
-local walkSpeed = 200
-local safeY = 1
+local walkSpeed = 60
+local safeY = 5
 local coinCount = 0
 
 local maps = {
