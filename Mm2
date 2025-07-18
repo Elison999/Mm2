@@ -388,7 +388,7 @@ RunService.Stepped:Connect(function()
 	end
 end)
 
--- Loop principal
+-- Loop principal com distância 40
 task.spawn(function()
 	while true do
 		if autofarmEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
@@ -414,11 +414,14 @@ task.spawn(function()
 
 				for _, coin in ipairs(coins) do
 					if autofarmEnabled and coin and coin:IsDescendantOf(game) then
-						pcall(function()
-							walkTo(coin.Position + Vector3.new(0, 2.5, 0))
-							task.wait(0.15)
-							coinCount += 1
-						end)
+						local distance = (coin.Position - hrp.Position).Magnitude
+						if distance <= 40 then
+							pcall(function()
+								walkTo(coin.Position + Vector3.new(0, 2.5, 0))
+								task.wait(0.15)
+								coinCount += 1
+							end)
+						end
 					end
 				end
 
