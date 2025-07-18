@@ -82,7 +82,7 @@ local function UpdateHighlight(player)
 end
 
 TabESP:CreateToggle({
-	Name = "Outline ESP MM2",
+	Name = "Outline ESP",
 	CurrentValue = false,
 	Flag = "ToggleESP",
 	Callback = function(Value)
@@ -306,6 +306,107 @@ end)
 
 -- AUTO TAB
 local TabAuto = Window:CreateTab("Auto", 4483362458)
+
+local Toggle = Tab:CreateToggle({
+	Name = "Auto Farm Coins (Walk + Noclip)",
+	CurrentValue = false,
+	Flag = "AutoFarmCoins",
+	Callback = function(Value)
+		autofarmEnabled = Value
+	end,
+})
+
+-- 🧲 Funções de suporte
+
+local function getCurrentMap()
+	for _, name in ipairs(maps) do
+		local map = Workspace:FindFirstChild(name)
+		if map and map:FindFirstChild("CoinContainer") then
+			return map
+		end
+	end
+	return nil
+end
+
+local function getAllCoins(map)
+	local coins = {}
+	local coinContainer = map:FindFirstChild("CoinContainer")
+	if coinContainer then
+		for _, obj in pairs(coinContainer:GetDescendants()) do
+			if obj.Name == "MainCoin" and obj:IsA("BasePart") then
+				table.insert(coins, obj)
+			end
+		end
+	end
+	return coins
+end
+
+local function walkTo(position)
+	if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return end
+	local hrp = LocalPlayer.Character.HumanoidRootPart
+	local direction = (position - hrp.Position).Unit
+	local distance = (hrp.Position - position).Magnitude
+	local duration = distance / walkSpeed
+	local start = tick()
+
+	while tick() - start < duration and autofarmEnabled do
+		if not LocalPlayer.Character or not hrp then break end
+		hrp.Velocity = direction * walkSpeed
+		task.wait()
+	end
+
+	hrp.Velocity = Vector3.zero
+end
+
+local function teleportToSafeSpot(map)
+	local root = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+	if not root then return end
+	local part = map:FindFirstChild("Floor") or map:FindFirstChildWhichIsA("BasePart")
+	if part then
+		root.CFrame = part.CFrame + Vector3.new(0, 10, 0)
+	else
+		root.CFrame = CFrame.new(0, 10, 0)
+	end
+end
+
+-- ☁️ NoClip constante
+RunService.Stepped:Connect(function()
+	if LocalPlayer.Character and autofarmEnabled then
+		for _, v in pairs(LocalPlayer.Character:GetDescendants()) do
+			if v:IsA("BasePart") then
+				v.CanCollide = false
+			end
+		end
+	end
+end)
+
+-- ♻️ Loop Auto Farm
+task.spawn(function()
+	while true do
+		if autofarmEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+			local map = getCurrentMap()
+			if map then
+				local hrp = LocalPlayer.Character.HumanoidRootPart
+
+				if hrp.Position.Y < safeY then
+					teleportToSafeSpot(map)
+					task.wait(1)
+				end
+
+				local coins = getAllCoins(map)
+				for _, coin in ipairs(coins) do
+					if autofarmEnabled and coin and coin.Parent then
+						pcall(function()
+							walkTo(coin.Position + Vector3.new(0, 3, 0))
+							task.wait(0.1)
+						end)
+					end
+				end
+			end
+		end
+		task.wait(0.5)
+	end
+end)
 
 local AutoGetGun = { Enabled = false, CollectDistance = 5000 }
 
